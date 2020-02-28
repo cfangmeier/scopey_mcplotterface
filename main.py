@@ -1,28 +1,36 @@
 import lecroyreader as lcr
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotboard as mpb
+from functools import lru_cache
 
 
-def main():
-    def read_n_plot(id_, channel):
-        file = f'trace_data/C{channel}step{id_:05d}.trc'
-        metadata, trigtimes, data = lcr.read(file)
-        times = np.linspace(0, data.shape[1], data.shape[1])*metadata['horiz_interval']
-        times *= 1E6  # to um
-        plt.plot(times, data[0, :], label=f'C{channel}')
-        return metadata
+@lru_cache()
+def get_trace(folder, number, channel):
+    from os.path import join
+    filename = join(folder, f'{channel}step{number:05d}.trc')
+    metadata, _, data = lcr.read(filename)
+    times = np.linspace(0, data.shape[0], data.shape[0]) * metadata['horiz_interval']
+    return times, data
 
-    for i in range(2, 11):
-        plt.clf()
-        read_n_plot(i, 1)
-        read_n_plot(i, 3)
-        metadata = read_n_plot(i, 4)
-        plt.legend()
-        plt.xlabel(r'$\mu$s')
-        plt.ylabel('V')
-        plt.grid()
-        plt.savefig(f'traces/sample_{i}.png')
+
+@mpb.decl_fig
+def intensity_plot(title, channel):
+    for i in range(1019):
+        trace = get_trace('trace_data/2020_02_27/', i, channel)
+        plt.plot(*trace, 'b', alpha=0.4, linewidth=.1)
+    plt.xlabel(r'Time (s)')
+    plt.ylabel('Amplitude (V)')
+    plt.ylim((-0.25, 2.25))
+    plt.title(title)
+    plt.grid()
 
 
 if __name__ == '__main__':
-    main()
+    plots = {
+        'intensity-AND': intensity_plot('AND', 'C1'),
+        'intensity-A1': intensity_plot('A1', 'C3'),
+        'intensity-A2': intensity_plot('A2', 'C4'),
+    }
+    mpb.render(plots)
+    mpb.generate_report(plots, 'Scintillator Traces')
