@@ -9,6 +9,7 @@ import mplhep as hep
 def get_phs(dataset, sub_dataset):
     with uproot.open(join('trace_data', dataset, sub_dataset, 'data.root')) as f:
         phs = f['data'].array('pulse_height')
+        phs += f['data'].array('acq_vert_offset')
         times = f['data'].array('trigger_time')
         duration = times.max() - times.min()
         return phs, duration
@@ -51,15 +52,17 @@ def pulse_height_comparison(datasets, title):
 
 
 if __name__ == '__main__':
-    dataset = '2020_03_10'
     plt.style.use(hep.style.CMS)
     plots = {
-        'comparison-ph1': pulse_height_comparison([(dataset, 'nosrc_1', 'Background'),
-                                                   (dataset, 'withsrc_1', 'With Source'),
-                                                   ], 'Comparison'),
-        'comparison-ph2': pulse_height_comparison([(dataset, 'nosrc_2', 'Background'),
-                                                   (dataset, 'withsrc_2', 'With Source'),
-                                                   ], 'Comparison'),
+        'comparison-ph1-2020_03_10': pulse_height_comparison([('2020_03_10', 'nosrc_1', 'Background'),
+                                                              ('2020_03_10', 'withsrc_1', 'With Source'),
+                                                              ], 'Comparison'),
+        'comparison-ph2-2020_03_10': pulse_height_comparison([('2020_03_10', 'nosrc_2', 'Background'),
+                                                              ('2020_03_10', 'withsrc_2', 'With Source'),
+                                                              ], 'Comparison'),
+        'comparison-ph1-2020_03_13': pulse_height_comparison([('2020_03_13', 'nosrc', 'Background'),
+                                                              ('2020_03_13', 'withsrc', 'With Source'),
+                                                              ], 'Comparison'),
     }
     mpb.render(plots)
     mpb.generate_report(plots, 'Scintillator Traces')
